@@ -1,4 +1,5 @@
 import generator
+import time
 from dataclasses import dataclass as ds
 
 @ds
@@ -33,7 +34,7 @@ class Data:
             number = int(num)
         )
 
-def little_than(obj1: Data, obj2: Data, key: str) -> "bool":
+def less_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) < (obj2.name.last, obj2.name.first, obj2.name.middle)
     elif key == "date":
@@ -42,7 +43,7 @@ def little_than(obj1: Data, obj2: Data, key: str) -> "bool":
         return obj1.number < obj2.number
     else:
         raise ValueError("Unknown sort key")
-def less_than(obj1: Data, obj2: Data, key: str) -> "bool":
+def little_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) <= (obj2.name.last, obj2.name.first, obj2.name.middle)
     elif key == "date":
@@ -51,6 +52,28 @@ def less_than(obj1: Data, obj2: Data, key: str) -> "bool":
         return obj1.number <= obj2.number
     else:
         raise ValueError("Unknown sort key")
+def more_than(obj1: Data, obj2: Data, key: str) -> "bool":
+    if key == "name":
+        return (obj1.name.last, obj1.name.first, obj1.name.middle) > (obj2.name.last, obj2.name.first, obj2.name.middle)
+    elif key == "date":
+        return (obj1.date.year, obj1.date.month, obj1.date.day) > (obj2.date.year, obj2.date.month, obj2.date.day)
+    elif key == "number":
+        return obj1.number > obj2.number
+    else:
+        raise ValueError("Unknown sort key")
+
+def is_stable(test_data: list[Data], key: str, sort_func) -> "bool":
+    sorted_data = sort_func(test_data, key)
+    for i in range(len(sorted_data) - 1):
+        curr = sorted_data[i]
+        nxt = sorted_data[i + 1]
+        if curr.number == nxt.number:
+            idx_curr_original = test_data.index(curr)
+            idx_nxt_original = test_data.index(nxt)
+            if idx_curr_original > idx_nxt_original:
+                return False
+    return True
+
 
 def merge(left: list[Data], right: list[Data], key: str) -> list[Data]:
     merged = []
@@ -92,21 +115,69 @@ def natural_merge_sort(data: list[Data], key: str) -> "list[Data]":
         runs = new_runs
     return runs[0]
 
+def binary_insertion_sort(data: list[Data], key: str) -> "list[Data]":
+    for i in range(1, len(data)):
+        compared = data[i]
+
+        left, right = 0, i - 1
+        while left <= right:
+            mid = (left + right) // 2
+            if more_than(data[mid], compared, key):
+                right = mid - 1
+            else:
+                left = mid + 1
+
+        for j in range(i, left, -1):
+            data[j] = data[j - 1]
+
+        data[left] = compared
+
+    return data
+
 def sort_by_merge(filename: str, key: str):
     data = []
     with open(filename, 'r') as f:
         for line in f:
             data.append(Data.set(line))
+    start = time.time()
+    sorted = natural_merge_sort(data, key)
+    end = time.time()
     with open("data/output/sorted_by_merge", "w") as f:
-        for d in natural_merge_sort(data, key):
+        f.write("fio;date;num\n")
+        for d in sorted:
             line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number}\n"
             f.write(line)
+        f.write(f"сортировка выполнена за {end - start} секунд\n")
+        if is_stable(data, key, natural_merge_sort):
+            f.write("устойчива")
+        else:
+            f.write("неустойчива")
 
+def sort_by_binary_inserts(filename: str, key: str):
+    data = []
+    with open(filename, 'r') as f:
+        for line in f:
+            data.append(Data.set(line))
+    start = time.time()
+    sorted = binary_insertion_sort(data, key)
+    end = time.time()
 
+    with open("data/output/sorted_by_binary_inserts", "w") as f:
+        f.write("fio;date;num\n")
+        for d in sorted:
+            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number}\n"
+            f.write(line)
+        f.write(f"сортировка выполнена за {end - start} секунд\n")
+        if is_stable(data, key, binary_insertion_sort):
+            f.write("устойчива")
+        else:
+            f.write("неустойчива")
 
 def main():
-    generator.generate_file("data/input/10_dataset.csv", 10)
-    sort_by_merge("data/input/10_dataset.csv", "name")
+    filename = "data/input/100k_dataset.csv"
+    generator.generate_file(filename, 100000)
+    sort_by_merge(filename, "name")
+    sort_by_binary_inserts(filename, "name")
 
 if __name__ == "__main__":
     main()
