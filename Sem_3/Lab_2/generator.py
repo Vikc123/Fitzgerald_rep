@@ -45,18 +45,10 @@ def generate_dates(count):
     return dates
 
 def generate_file(filename, count):
-    with open(filename, "a") as f:
-        f.write("fio;date;num")
+    with open(filename, "w") as f:
+        f.write("fio;date;num\n")
     dates = generate_dates(count)
     names = generate_russian_names(count)
-    with open(filename,'a', encoding= 'utf-8') as f:
+    with open(filename,'w', encoding= 'utf-8') as f:
         for i in range(count):
             f.write(f"{names[i]};{dates[i]};{i}\n")
-
-def main():
-    print(generate_russian_names(3))
-    print(generate_dates(3))
-    generate_file("data/input/10k_dataset.csv", 10000)
-
-if __name__ == "__main__":
-    main()
