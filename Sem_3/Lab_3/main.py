@@ -9,8 +9,9 @@ class Date:
     year: int
     @classmethod
     def set(cls, string: str) -> "Date":
-        day, month, year = map(int, string.split('.'))
+        day, month, year = map(int, string.split("."))
         return cls(day, month, year)
+
 @ds
 class Name:
     last: str
@@ -20,54 +21,71 @@ class Name:
     def set(cls, string: str) -> "Name":
         last, first, middle = string.split()
         return cls(last, first, middle)
+
 @ds
 class Data:
-    name: Name
     date: Date
-    number: int
+    name: Name
+    num: int
     @classmethod
     def set(cls, string: str) -> "Data":
-        name, date, num = string.split(";")
+        name, date, num = string.split(';')
         return cls(
             name = Name.set(name),
             date = Date.set(date),
-            number = int(num)
+            num = int(num)
         )
 
 def less_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) < (obj2.name.last, obj2.name.first, obj2.name.middle)
-    elif key == "date":
-        return (obj1.date.year, obj1.date.month, obj1.date.day) < (obj2.date.year, obj2.date.month, obj2.date.day)
-    elif key == "number":
-        return obj1.number < obj2.number
-    else:
-        raise ValueError("Unknown sort key")
+    if key == "date":
+        return (obj1.date.year, obj1.date.month, obj1.date.day) < (obj1.date.year, obj1.date.month, obj1.date.day)
+    if key == "num":
+        return obj1.num < obj2.num
 def little_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) <= (obj2.name.last, obj2.name.first, obj2.name.middle)
-    elif key == "date":
-        return (obj1.date.year, obj1.date.month, obj1.date.day) <= (obj2.date.year, obj2.date.month, obj2.date.day)
-    elif key == "number":
-        return obj1.number <= obj2.number
-    else:
-        raise ValueError("Unknown sort key")
+    if key == "date":
+        return (obj1.date.year, obj1.date.month, obj1.date.day) <= (obj1.date.year, obj1.date.month, obj1.date.day)
+    if key == "num":
+        return obj1.num <= obj2.num
 def more_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) > (obj2.name.last, obj2.name.first, obj2.name.middle)
-    elif key == "date":
-        return (obj1.date.year, obj1.date.month, obj1.date.day) > (obj2.date.year, obj2.date.month, obj2.date.day)
-    elif key == "number":
-        return obj1.number > obj2.number
-    else:
-        raise ValueError("Unknown sort key")
+    if key == "date":
+        return (obj1.date.year, obj1.date.month, obj1.date.day) > (obj1.date.year, obj1.date.month, obj1.date.day)
+    if key == "num":
+        return obj1.num > obj2.num
+def eq(obj1: Data, obj2: Data, key: str) -> "bool":
+    if key == "name":
+        return (obj1.name.last, obj1.name.first, obj1.name.middle) == (obj2.name.last, obj2.name.first, obj2.name.middle)
+    if key == "date":
+        return (obj1.date.year, obj1.date.month, obj1.date.day) == (obj2.date.year, obj2.date.month, obj2.date.day)
+    if key == "num":
+        return obj1.num == obj2.num
+
+def string_to_number(s: str) -> int:
+    result = 0
+    for ch in s:
+        result = result * 1000 + ord(ch)
+    return result
+
+def get_numeric(obj: Data, key: str):
+    if key == "name":
+        return string_to_number(f"{obj.name.last} {obj.name.first} {obj.name.middle}")
+    if key == "date":
+        return obj.date.year * 10000 + obj.date.month * 100 + obj.date.day
+    if key == "num":
+        return obj.num
+
 
 def is_stable(test_data: list[Data], key: str, sort_func) -> "bool":
     sorted_data = sort_func(test_data, key)
     for i in range(len(sorted_data) - 1):
         curr = sorted_data[i]
         nxt = sorted_data[i + 1]
-        if curr.number == nxt.number:
+        if curr.num == nxt.num:
             idx_curr_original = test_data.index(curr)
             idx_nxt_original = test_data.index(nxt)
             if idx_curr_original > idx_nxt_original:
@@ -133,18 +151,22 @@ def binary_insertion_sort(data: list[Data], key: str) -> "list[Data]":
 
     return data
 
-def sort_by_merge(filename: str, key: str):
+def load(filename: str) -> list[Data]:
     data = []
     with open(filename, 'r') as f:
         for line in f:
             data.append(Data.set(line))
+    return data
+
+def sort_by_merge(filename: str, key: str):
+    data = load(filename)
     start = time.time()
     sorted = natural_merge_sort(data, key)
     end = time.time()
     with open("data/output/sorted_by_merge", "w") as f:
         f.write("fio;date;num\n")
         for d in sorted:
-            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number}\n"
+            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.num}\n"
             f.write(line)
         f.write(f"сортировка выполнена за {end - start} секунд\n")
         if is_stable(data, key, natural_merge_sort):
@@ -164,7 +186,7 @@ def sort_by_binary_inserts(filename: str, key: str):
     with open("data/output/sorted_by_binary_inserts", "w") as f:
         f.write("fio;date;num\n")
         for d in sorted:
-            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number}\n"
+            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.num}\n"
             f.write(line)
         f.write(f"сортировка выполнена за {end - start} секунд\n")
         if is_stable(data, key, binary_insertion_sort):
@@ -172,11 +194,41 @@ def sort_by_binary_inserts(filename: str, key: str):
         else:
             f.write("неустойчива")
 
-def main():
-    filename = "data/input/10_dataset.csv"
-    generator.generate_file(filename, 10)
-    sort_by_merge(filename, "name")
-    sort_by_binary_inserts(filename, "name")
+def linear_search(data: list[Data], key: str, target) -> "int":
+    for i in range(data.__len__()):
+        if eq(data[i], target, key):
+            return i
+        else:
+            continue
 
+def interpolation_search(data: list[Data], target, key: str):
+    if key != "date":
+        l = 0
+        r = data.__len__()-1
+        steps = 0
+        while get_numeric(data[l], key) < string_to_number(target) and get_numeric(data[r],key) > string_to_number(target):
+            if eq(data[l],data[r],key):
+                break
+            index = (string_to_number(target) - get_numeric(data[l], key))*(l-r)//(get_numeric(data[l], key)
+                                                                                   - get_numeric(data[r], key)) + l
+            steps += 1
+            if get_numeric(data[index], key) > string_to_number(target):
+                r = index-1
+            elif get_numeric(data[index],key) < string_to_number(target):
+                l = index+1
+            else:
+                return index, steps
+        if get_numeric(data[l], key) == string_to_number(target):
+            return l, steps
+        if get_numeric(data[r], key) == string_to_number(target):
+            return r, steps
+        return -1, steps
+
+
+
+def main():
+    filename = "data/output/sorted_by_merge"
+    pos, steps = interpolation_search(load(filename), "3","num")
+    print(f"{pos} {steps}")
 if __name__ == "__main__":
     main()
