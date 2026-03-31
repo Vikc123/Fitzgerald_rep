@@ -1,8 +1,6 @@
-import datetime
 import random
-
-
-def generate_names(count: int) -> "list[str]":
+import datetime as dt
+def generate_names(count: int)->"list[str]":
     last_names = ['Иванов', 'Петров', 'Сидоров', 'Кузнецов', 'Попов',
                   'Васильев', 'Смирнов', 'Новиков', 'Федоров', 'Морозов',
                   'Волков', 'Алексеев', 'Лебедев', 'Семенов', 'Егоров']
@@ -26,26 +24,34 @@ def generate_names(count: int) -> "list[str]":
             middle = random.choice(middle_names_m)
             names.append(f"{last} {first} {middle}")
         else:
-            last = random.choice(last_names) + 'a'
+            last = random.choice(last_names)+"a"
             first = random.choice(first_names_f)
             middle = random.choice(middle_names_f)
             names.append(f"{last} {first} {middle}")
     return names
 
-def generate_date(count: int) -> "list[str]":
-    start = datetime.date(1985, 1, 1)
-    end = datetime.date(2026, 3, 28)
+def generate_dates(count: int) -> "list[str]":
+    start = dt.date(1981, 1, 1)
+    end = dt.date(2026, 3, 31)
     dates = []
     for i in range(count):
-        dates.append((start + datetime.timedelta(days=random.randint(0, (end-start).days))).strftime("%d.%m.%Y"))
+        day = start + dt.timedelta(days = random.randint(0, (end - start).days))
+        dates.append(day.strftime("%d.%m.%Y"))
     return dates
 
-def generate_file(path: str, count: int)->None:
-    names = generate_names(count)
-    dates = generate_date(count)
-    with open(path, 'w') as p:
-        p.write("name; date; №\n")
+def generate_discrip(count: int) -> list[str]:
+        russian_letters = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+        russian_letters += russian_letters.upper()
+        discription = []
         for i in range(count):
-            p.write(f"{names[i]};{dates[i]};{i}\n")
+            discription.append(''.join(random.choice(russian_letters) for _ in range(10)))
+        return discription
 
-
+def generate_file(filename: str, count: int) -> None:
+    names = generate_names(count)
+    dates = generate_dates(count)
+    discrips = generate_discrip(count)
+    with open(filename, "w") as f:
+        f.write("fio; date; num; discp\n")
+        for i in range(count):
+            f.write(f"{names[i]};{dates[i]};{i};{discrips[i]}\n")
