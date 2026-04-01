@@ -1,7 +1,4 @@
 from modules import sort, search, generator as g
-
-
-
 def main():
     filename = "data/input/10_dataset.csv"
     # g.generate_file(filename, 10)

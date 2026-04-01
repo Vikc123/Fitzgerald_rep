@@ -11,6 +11,9 @@ class Date:
         return cls(day, month, year)
     def to_num(self)-> "int":
         return self.year * 1000 + self.month * 100 + self.day
+
+    def get(self) -> "str":
+        return f"{self.day}.{self.month}.{self.year}"
 @ds
 class Name:
     last: str

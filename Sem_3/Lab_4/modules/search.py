@@ -96,19 +96,19 @@ def serch_by_boyer_moore_horspul(filename: str, pattern: str, mode: str) -> None
             data.append(Data.set(line))
     if mode == "name":
         for i in range(len(data)):
-            if boyer_moore_horspul(data[i].name.get(), pattern) >= 0:
-                print(data[i])
+            if boyer_moore_horspul(data[i].name.get(), pattern):
+                print(f"{data[i].name.get()};{data[i].date.get()};{data[i].number};{data[i].discrip}")
                 return
             else:
-                print("Данное вхождение не найдено(")
-                return
+                continue
+        print("Вхождения не найдено(")
     elif mode == "disc":
         for i in range(len(data)):
-            if boyer_moore_horspul(data[i].discrip, pattern) >= 0:
-                print(data[i])
+            if boyer_moore_horspul(data[i].discrip, pattern):
+                print(f"{data[i].name.get()};{data[i].date.get()};{data[i].number};{data[i].discrip}")
                 return
             else:
-                print("Данное вхождение не найдено(")
-                return
+                continue
+        print("Вхождения не найдено(")
     else:
         raise ValueError("Unknown sort key")
