@@ -1,7 +1,7 @@
-import my_class
+from .my_class import Data
 import time
 
-def less_than(obj1: my_class.Data, obj2: my_class.Data, key: str) -> "bool":
+def less_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) < (obj2.name.last, obj2.name.first, obj2.name.middle)
     elif key == "date":
@@ -10,7 +10,7 @@ def less_than(obj1: my_class.Data, obj2: my_class.Data, key: str) -> "bool":
         return obj1.number < obj2.number
     else:
         raise ValueError("Unknown sort key")
-def little_than(obj1: my_class.Data, obj2: my_class.Data, key: str) -> "bool":
+def little_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) <= (obj2.name.last, obj2.name.first, obj2.name.middle)
     elif key == "date":
@@ -19,7 +19,7 @@ def little_than(obj1: my_class.Data, obj2: my_class.Data, key: str) -> "bool":
         return obj1.number <= obj2.number
     else:
         raise ValueError("Unknown sort key")
-def more_than(obj1: my_class.Data, obj2: my_class.Data, key: str) -> "bool":
+def more_than(obj1: Data, obj2: Data, key: str) -> "bool":
     if key == "name":
         return (obj1.name.last, obj1.name.first, obj1.name.middle) > (obj2.name.last, obj2.name.first, obj2.name.middle)
     elif key == "date":
@@ -29,7 +29,7 @@ def more_than(obj1: my_class.Data, obj2: my_class.Data, key: str) -> "bool":
     else:
         raise ValueError("Unknown sort key")
 
-def is_stable(test_data: list[my_class.Data], key: str, sort_func) -> "bool":
+def is_stable(test_data: list[Data], key: str, sort_func) -> "bool":
     sorted_data = sort_func(test_data, key)
     for i in range(len(sorted_data) - 1):
         curr = sorted_data[i]
@@ -40,7 +40,7 @@ def is_stable(test_data: list[my_class.Data], key: str, sort_func) -> "bool":
             if idx_curr_original > idx_nxt_original:
                 return False
     return True
-def merge(left: list[my_class.Data], right: list[my_class.Data], key: str) -> list[my_class.Data]:
+def merge(left: list[Data], right: list[Data], key: str) -> list[Data]:
     merged = []
     il = 0
     ir = 0
@@ -59,7 +59,7 @@ def merge(left: list[my_class.Data], right: list[my_class.Data], key: str) -> li
         ir+=1
     return merged
 
-def natural_merge_sort(data: list[my_class.Data], key: str) -> "list[my_class.Data]":
+def natural_merge_sort(data: list[Data], key: str) -> "list[Data]":
     runs = []
     start_of_run = 0
     for i in range(1, data.__len__()):
@@ -80,7 +80,7 @@ def natural_merge_sort(data: list[my_class.Data], key: str) -> "list[my_class.Da
         runs = new_runs
     return runs[0]
 
-def binary_insertion_sort(data: list[my_class.Data], key: str) -> "list[my_class.Data]":
+def binary_insertion_sort(data: list[Data], key: str) -> "list[Data]":
     for i in range(1, len(data)):
         compared = data[i]
 
@@ -104,14 +104,14 @@ def sort_by_merge(filename: str, key: str):
     with open(filename, 'r') as f:
         next(f)
         for line in f:
-            data.append(my_class.Data.set(line))
+            data.append(Data.set(line))
     start = time.time()
     sorted = natural_merge_sort(data, key)
     end = time.time()
     with open("data/output/sorted_by_merge.csv", "w") as f:
-        f.write("fio;date;num\n")
+        f.write("fio;date;num;dis\n")
         for d in sorted:
-            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number}\n"
+            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number};{d.discrip}"
             f.write(line)
         f.write(f"сортировка выполнена за {end - start} секунд\n")
         if is_stable(data, key, natural_merge_sort):
@@ -124,15 +124,15 @@ def sort_by_binary_inserts(filename: str, key: str):
     with open(filename, 'r') as f:
         next(f)
         for line in f:
-            data.append(my_class.Data.set(line))
+            data.append(Data.set(line))
     start = time.time()
     sorted = binary_insertion_sort(data, key)
     end = time.time()
 
-    with open("data/output/sorted_by_binary_inserts.csv.csv", "w") as f:
-        f.write("fio;date;num\n")
+    with open("data/output/sorted_by_binary_inserts.csv", "w") as f:
+        f.write("fio;date;num;disc\n")
         for d in sorted:
-            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number}\n"
+            line = f"{d.name.last} {d.name.first} {d.name.middle};{d.date.day}.{d.date.month}.{d.date.year};{d.number};{d.discrip}"
             f.write(line)
         f.write(f"сортировка выполнена за {end - start} секунд\n")
         if is_stable(data, key, binary_insertion_sort):

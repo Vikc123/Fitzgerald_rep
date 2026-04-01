@@ -26,18 +26,22 @@ class Name:
         for i, char in enumerate(fio[:12]):
             res += ord(char) * (1100 ** (12 - i))
         return res
+    def get(self) -> "str":
+        return f"{self.last} {self.first} {self.middle}"
 @ds
 class Data:
     name: Name
     date: Date
     number: int
+    discrip: str
     @classmethod
     def set(cls, string: str) -> "Data":
-        name, date, num = string.split(";")
+        name, date, num, dis= string.split(";")
         return cls(
             name = Name.set(name),
             date = Date.set(date),
-            number = int(num)
+            number = int(num),
+            discrip = dis
         )
     def to_num(self, mode: str) -> "int":
         if mode == "name":
