@@ -30,6 +30,21 @@ class Date:
 
     def get(self) -> "str":
         return f"{self.day}.{self.month}.{self.year}"
+
+    def validate(self):
+        if self.day < 1 or self.month < 1 or self.year < 1:
+            raise ValueError(f"Дата не может содержать отрицательные числа или нули: {self.get()}")
+
+        if self.month > 12:
+            raise ValueError(f"Месяц не может быть больше 12: {self.month}")
+
+        days_in_month = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+        if (self.year % 4 == 0 and self.year % 100 != 0) or (self.year % 400 == 0):
+            days_in_month[2] = 29
+
+        if self.day > days_in_month[self.month]:
+            raise ValueError(f"В выбранном месяце/году нет столько дней ({self.day}): {self.get()}")
 @ds
 class Name:
     last: str
@@ -43,6 +58,13 @@ class Name:
     def get(self) -> "str":
         return f"{self.last} {self.first} {self.middle}"
 
+    def validate(self):
+        for part, label in [(self.last, "Фамилия"), (self.first, "Имя"), (self.middle, "Отчество")]:
+            if not part.strip():
+                raise ValueError(f"Поле {label} не может быть пустым")
+            if any(char.isdigit() for char in part):
+                raise ValueError(f"В ФИО обнаружены цифры: {part}")
+
 @total_ordering
 @ds
 class Data:
@@ -50,19 +72,12 @@ class Data:
     date: Date
     number: int
     discrip: str
-    @classmethod
-    def set(cls, string: str) -> "Data":
-        name, date, num, dis= string.split(";")
-        return cls(
-            name = Name.set(name),
-            date = Date.set(date),
-            number = int(num),
-            discrip = dis
-        )
+
     def __lt__(self, other: "Data") -> bool:
         if self.date != other.date:
             return self.date < other.date
         return self.number < other.number
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Data):
             return False
@@ -74,6 +89,43 @@ class Data:
         if self.date == other.date:
             return self.number <= other.number
         return False
+
+    @classmethod
+    def set(cls, string: str) -> "Data":
+        if not string or not string.strip():
+            raise ValueError("Пустая строка данных")
+
+        parts = [s.strip() for s in string.split(";")]
+        if len(parts) < 4:
+            raise ValueError("Недостаточно данных в строке (должно быть 4 раздела через ';')")
+
+        fio_str, date_str, num_str, dis = parts
+
+        fio_parts = fio_str.split()
+        if len(fio_parts) != 3:
+            raise ValueError(f"ФИО должно состоять из 3 слов, получено: {len(fio_parts)}")
+
+        try:
+            number = int(num_str)
+        except ValueError:
+            raise ValueError(f"Номер заявки должен быть числом, получено: '{num_str}'")
+
+        if number < 0:
+            raise ValueError(f"Номер заявки не может быть отрицательным: {number}")
+
+        name_obj = Name(*fio_parts)
+        date_obj = Date.set(date_str)
+
+        name_obj.validate()
+        date_obj.validate()
+
+        if not dis:
+            raise ValueError("Описание не может быть пустым")
+
+        return cls(name=name_obj, date=date_obj, number=number, discrip=dis)
+
+    def get(self):
+        return f"{self.name};{self.date};{self.number};{self.discrip}"
 
 TNode = TypeVar('TNode', bound='Node')
 
@@ -165,43 +217,51 @@ class RedBlackTree():
         else:
             raise Exception("Unknown style.")
 
-    def preorder(self: T) -> list:
-        return self.pre_order_helper(self.root)
+    def inorder(self: T, filename: str) -> None:
+        nodes = self.in_order_helper(self.root)
+        self._write_to_file(nodes, filename)
 
-    def inorder(self: T) -> list:
-        return self.in_order_helper(self.root)
+    def preorder(self: T, filename: str) -> None:
+        nodes = self.pre_order_helper(self.root)
+        self._write_to_file(nodes, filename)
 
-    def postorder(self: T) -> list:
-        return self.post_order_helper(self.root)
+    def postorder(self: T, filename: str) -> None:
+        nodes = self.post_order_helper(self.root)
+        self._write_to_file(nodes, filename)
+
+    def _write_to_file(self, nodes: List[Node], filename: str) -> None:
+        with open(filename, 'w', encoding='utf-8') as f:
+            for node in nodes:
+                for item in node.value:
+                    f.write(f"{item.name.get()};{item.date.get()};{item.number};{item.discrip}\n")
 
     def pre_order_helper(self: T, node: Node) -> list:
-        output = []
-        if not node.is_null():
-            left = self.pre_order_helper(node.left)
-            right = self.pre_order_helper(node.right)
-            output.extend([node])
-            output.extend(left)
-            output.extend(right)
+        if node.is_null():
+            return []
+
+        output = [node]
+        output.extend(self.pre_order_helper(node.left))
+        output.extend(self.pre_order_helper(node.right))
         return output
 
     def in_order_helper(self: T, node: Node) -> list:
+        if node.is_null():
+            return []
+
         output = []
-        if not node.is_null():
-            left = self.in_order_helper(node.left)
-            right = self.in_order_helper(node.right)
-            output.extend(left)
-            output.extend([node])
-            output.extend(right)
+        output.extend(self.in_order_helper(node.left))
+        output.extend([node])
+        output.extend(self.in_order_helper(node.right))
         return output
 
     def post_order_helper(self: T, node: Node) -> list:
+        if node.is_null():
+            return []
+
         output = []
-        if not node.is_null():
-            left = self.post_order_helper(node.left)
-            right = self.post_order_helper(node.right)
-            output.extend(left)
-            output.extend(right)
-            output.extend([node])
+        output.extend(self.post_order_helper(node.left))
+        output.extend(self.post_order_helper(node.right))
+        output.extend([node])
         return output
 
     def search_tree_helper(self: T, node: Node, data: Data) -> Node:
@@ -211,6 +271,30 @@ class RedBlackTree():
         if data < node.get_data():
             return self.search_tree_helper(node.left, data)
         return self.search_tree_helper(node.right, data)
+
+    def delete_exact_helper(self, data: str) -> None:
+        target = Data.set(data)
+        node = self.search(target)
+
+        if node.is_null():
+            print(f"Узел с ключом {target.date.get()} #{target.number} не найден.")
+            return
+
+        found_idx = -1
+        for i, item in enumerate(node.value):
+            if (item.date == target.date and
+                    item.number == target.number and
+                    item.name == target.name and
+                    item.discrip == target.discrip):
+                found_idx = i
+                break
+
+        if found_idx != -1:
+            node.value.pop(found_idx)
+            if not node.value:
+                self.delete_node_helper(self.root, target)
+        else:
+            print("Запись с полным совпадением всех полей не найдена в списке.")
 
     def delete_fix(self: T, x: Node) -> None:
         while x != self.root and x.is_black():
@@ -487,7 +571,20 @@ class RedBlackTree():
         self.__print_helper(self.root, "", True)
 
     def read_and_create(self, filename: str) -> None:
-        with open(filename, "r") as f:
-            lines = f.readlines()
-            for line in lines[1:-1]:
-                self.insert(Data.set(line))
+        try:
+            with open(filename, "r", encoding='utf-8') as f:
+                lines = f.readlines()
+                for i, line in enumerate(lines[1:], 1):
+                    try:
+                        self.insert(Data.set(line))
+                    except ValueError as e:
+                        print(f"Ошибка в строке {i}: {e}. Пропускаю...")
+        except FileNotFoundError:
+            print(f"Файл {filename} не найден.")
+
+    def clear(self: T) -> None:
+        self.root = self.TNULL
+        self.size = 0
+        import gc
+        gc.collect()
+        print("Дерево полностью очищено.")
