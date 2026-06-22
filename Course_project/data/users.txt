@@ -1,0 +1,15 @@
+1;user1@outlook.com;VIP
+2;user2@mail.ru;VIP
+3;user3@gmail.com;Premium
+4;user4@outlook.com;Premium
+5;user5@yandex.ru;VIP
+6;user6@outlook.com;Premium
+7;user7@mail.ru;Premium
+8;user8@mail.ru;Basic
+9;user9@gmail.com;Basic
+10;user10@outlook.com;Premium
+11;user11@mail.ru;Premium
+12;user12@gmail.com;Premium
+13;user13@yandex.ru;Premium
+14;user14@gmail.com;Basic
+15;user15@bk.ru;Premium
