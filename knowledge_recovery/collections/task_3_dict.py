@@ -1,5 +1,5 @@
 def add():
-    pass0
+    pass
 
 
 def main():
