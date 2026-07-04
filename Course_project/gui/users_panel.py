@@ -1,18 +1,16 @@
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QTableWidget,
-    QTableWidgetItem, QToolBar, QMessageBox, QInputDialog,
-    QTextEdit, QFileDialog, QHeaderView, QAbstractItemView
+    QWidget, QVBoxLayout, QLabel, QTableWidget,
+    QTableWidgetItem, QMessageBox, QInputDialog,
+    QTextEdit, QFileDialog, QHeaderView, QAbstractItemView,
+    QMainWindow
 )
 from gui.user_dialog import UserDialog
 
-class UsersWindow(QMainWindow):
+class UsersPanel(QWidget):
     def __init__(self, service):
         super().__init__()
 
         self.service = service
-
-        self.setWindowTitle("Справочник пользователей")
-        self.resize(900, 500)
 
         self.table = QTableWidget()
         self.table.setColumnCount(3)
@@ -34,35 +32,16 @@ class UsersWindow(QMainWindow):
             QAbstractItemView.SelectionBehavior.SelectRows
         )
 
-        central_widget = QWidget()
+        self.status_label = QLabel()
+
         layout = QVBoxLayout()
+        layout.addWidget(QLabel("Пользователи (хеш-таблица)"))
         layout.addWidget(self.table)
-        central_widget.setLayout(layout)
+        layout.addWidget(self.status_label)
 
-        self.setCentralWidget(central_widget)
+        self.setLayout(layout)
 
-        self.create_toolbar()
         self.refresh_table()
-
-    def create_toolbar(self):
-        toolbar = QToolBar("ToolStrip")
-        self.addToolBar(toolbar)
-
-        action_load = toolbar.addAction("Загрузить")
-        action_save = toolbar.addAction("Сохранить")
-        action_add = toolbar.addAction("Добавить")
-        action_delete = toolbar.addAction("Удалить")
-        action_search = toolbar.addAction("Найти")
-        action_show_all = toolbar.addAction("Показать все")
-        action_debug = toolbar.addAction("Печать КЧД")
-
-        action_load.triggered.connect(self.load_users)
-        action_save.triggered.connect(self.save_users)
-        action_add.triggered.connect(self.add_user)
-        action_delete.triggered.connect(self.delete_user)
-        action_search.triggered.connect(self.search_user)
-        action_show_all.triggered.connect(self.refresh_table)
-        action_debug.triggered.connect(self.show_tree)
 
     def refresh_table(self):
         data = self.service.get_users_table()
@@ -73,7 +52,7 @@ class UsersWindow(QMainWindow):
             for col, value in enumerate(user):
                 self.table.setItem(row, col, QTableWidgetItem(str(value)))
 
-        self.statusBar().showMessage(f"Записей: {len(data)}")
+        self.status_label.setText(f"Записей: {len(data)}")
 
     def load_users(self):
         filename, _ = QFileDialog.getOpenFileName(
@@ -162,7 +141,7 @@ class UsersWindow(QMainWindow):
             for col, value in enumerate(user):
                 self.table.setItem(row, col, QTableWidgetItem(str(value)))
 
-        self.statusBar().showMessage(f"Найдено: {len(data)} | Шагов поиска: {steps}")
+        self.status_label.setText(f"Найдено: {len(data)} | Шагов поиска: {steps}")
 
         QMessageBox.information(
             self,
@@ -170,16 +149,16 @@ class UsersWindow(QMainWindow):
             f"Найдено записей: {len(data)}\nШагов поиска: {steps}"
         )
 
-    def show_tree(self):
-        tree_text = self.service.debug_users_tree()
+    def show_hash_table(self):
+        hash_text = self.service.debug_users_hash_table()
 
         window = QMainWindow(self)
-        window.setWindowTitle("Отладка: красно-чёрное дерево")
+        window.setWindowTitle("Отладка: хеш-таблица (пользователи)")
         window.resize(800, 500)
 
         text_edit = QTextEdit()
         text_edit.setReadOnly(True)
-        text_edit.setText(tree_text)
+        text_edit.setText(hash_text)
 
         window.setCentralWidget(text_edit)
         window.show()

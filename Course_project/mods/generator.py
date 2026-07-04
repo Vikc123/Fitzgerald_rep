@@ -1,5 +1,7 @@
 import random
 
+from mods.models import ViewDate
+
 
 EMAIL_DOMAINS = [
     "mail.ru",
@@ -51,12 +53,20 @@ def generate_users(filename, count):
             file.write(f"{user_id};{email};{subscription}\n")
 
 
+def _random_release_date():
+    year = random.randint(1990, 2024)
+    month = random.randint(1, 12)
+    day = random.randint(1, 28)
+
+    return ViewDate.create(day, month, year)
+
+
 def generate_views(filename, users_count, views_count):
     with open(filename, "w", encoding="utf-8") as file:
         for _ in range(views_count):
             user_id = random.randint(1, users_count)
             film = random.choice(FILMS)
-            year = random.randint(1990, 2024)
             status = random.choice(STATUSES)
+            release_date = _random_release_date()
 
-            file.write(f"{user_id};{film};{year};{status}\n")
+            file.write(f"{user_id};{film};{release_date.to_string()};{status}\n")

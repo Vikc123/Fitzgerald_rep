@@ -1,30 +1,58 @@
 from mods.models import ViewRecord
 from mods.array_storage import ArrayStorage
+from mods.red_black_tree import RedBlackTree
 from mods.hash_table import HashTable
 
 
 class ViewsManager:
-    def __init__(self, initial_capacity=17):
+    def __init__(self):
         self.storage = ArrayStorage()
-        self.hash_table = HashTable(capacity=initial_capacity)
+        self.tree = RedBlackTree()
+        self.user_index = HashTable(capacity=17)
 
-    def add_view(self, user_id, film, year, status):
-        view = ViewRecord(user_id, film, year, status)
+    def add_view(self, user_id, film, release_date, status):
+        view = ViewRecord.create(user_id, film, release_date, status)
+
+        existing_records, _ = self.user_index.search(view.user_id)
+
+        for existing in existing_records:
+            if (
+                existing.film == view.film and
+                existing.release_date == view.release_date and
+                existing.status == view.status
+            ):
+                raise ValueError(
+                    f"Такой просмотр уже существует: пользователь {view.user_id}, "
+                    f"«{view.film}», {view.release_date.to_string()}, {view.status}"
+                )
 
         self.storage.add(view)
-        self.hash_table.insert(year, view)
+        self.tree.insert(view.release_date.to_number(), view)
+        self.user_index.insert(view.user_id, view)
 
         return view
 
-    def find_by_year(self, year):
-        records, steps = self.hash_table.search(year)
+    def find_by_date(self, release_date):
+        records, steps = self.tree.search(release_date.to_number())
+        return records, steps
+
+    def has_views_for_user(self, user_id):
+        records, steps = self.user_index.search(user_id)
+        return not records.is_empty()
+
+    def find_by_user(self, user_id):
+        records, steps = self.user_index.search(user_id)
         return records, steps
 
     def delete_view(self, view):
-        deleted_from_hash, steps = self.hash_table.delete_record(view.year, view)
+        _, steps = self.tree.search(view.release_date.to_number())
 
-        if not deleted_from_hash:
+        deleted_from_tree = self.tree.delete_record(view.release_date.to_number(), view)
+
+        if not deleted_from_tree:
             return False, steps
+
+        self.user_index.delete_record(view.user_id, view)
 
         deleted_from_storage = self.storage.remove(view)
 
@@ -33,33 +61,13 @@ class ViewsManager:
     def get_all_views(self):
         return self.storage.get_active_items()
 
-    def debug_hash_table(self):
-        return self.hash_table.debug_print()
+    def debug_tree(self):
+        return self.tree.debug_print()
 
     def clear(self):
         self.storage.clear()
-        self.hash_table.clear()
-
-    def load_from_file(self, filename):
-        self.clear()
-
-        with open(filename, "r", encoding="utf-8") as file:
-            for line_number, line in enumerate(file, start=1):
-                line = line.strip()
-
-                if not line:
-                    continue
-
-                try:
-                    view = ViewRecord.from_line(line)
-                    self.add_view(
-                        view.user_id,
-                        view.film,
-                        view.year,
-                        view.status
-                    )
-                except ValueError as error:
-                    print(f"Ошибка в строке {line_number}: {error}")
+        self.tree.clear()
+        self.user_index.clear()
 
     def save_to_file(self, filename):
         with open(filename, "w", encoding="utf-8") as file:

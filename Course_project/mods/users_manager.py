@@ -1,26 +1,39 @@
 from mods.models import UserRecord
 from mods.array_storage import ArrayStorage
-from mods.red_black_tree import RedBlackTree
+from mods.hash_table import HashTable
 
 
 class UsersManager:
-    def __init__(self):
+    def __init__(self, initial_capacity=17):
         self.storage = ArrayStorage()
-        self.tree = RedBlackTree()
+        self.hash_table = HashTable(capacity=initial_capacity)
+        self.id_index = HashTable(capacity=17)
 
     def add_user(self, user_id, email, subscription):
-        if self.find_by_email(email)[0] is not None:
-            raise ValueError(f"Пользователь с email '{email}' уже существует")
+        user = UserRecord.create(user_id, email, subscription)
 
-        user = UserRecord(user_id, email, subscription)
+        if self.find_by_id(user.user_id)[0] is not None:
+            raise ValueError(f"Пользователь с ID {user.user_id} уже существует")
+
+        if self.find_by_email(user.email)[0] is not None:
+            raise ValueError(f"Пользователь с email '{user.email}' уже существует")
 
         self.storage.add(user)
-        self.tree.insert(email, user)
+        self.hash_table.insert(user.email, user)
+        self.id_index.insert(user.user_id, user)
 
         return user
 
     def find_by_email(self, email):
-        records, steps = self.tree.search(email)
+        records, steps = self.hash_table.search(email)
+
+        for user in records:
+            return user, steps
+
+        return None, steps
+
+    def find_by_id(self, user_id):
+        records, steps = self.id_index.search(user_id)
 
         for user in records:
             return user, steps
@@ -33,10 +46,12 @@ class UsersManager:
         if user is None:
             return False, steps
 
-        deleted_from_tree = self.tree.delete_record(email, user)
+        deleted_from_hash, _ = self.hash_table.delete_record(email, user)
 
-        if not deleted_from_tree:
+        if not deleted_from_hash:
             return False, steps
+
+        self.id_index.delete_record(user.user_id, user)
 
         deleted_from_storage = self.storage.remove(user)
 
@@ -45,12 +60,13 @@ class UsersManager:
     def get_all_users(self):
         return self.storage.get_active_items()
 
-    def debug_tree(self):
-        return self.tree.debug_print()
+    def debug_hash_table(self):
+        return self.hash_table.debug_print()
 
     def clear(self):
         self.storage.clear()
-        self.tree.clear()
+        self.hash_table.clear()
+        self.id_index.clear()
 
     def load_from_file(self, filename):
         self.clear()

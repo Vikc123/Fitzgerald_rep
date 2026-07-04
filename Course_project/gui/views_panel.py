@@ -1,26 +1,26 @@
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QTableWidget,
-    QTableWidgetItem, QToolBar, QMessageBox, QInputDialog,
-    QTextEdit, QFileDialog, QHeaderView, QAbstractItemView
+    QWidget, QVBoxLayout, QLabel, QTableWidget,
+    QTableWidgetItem, QMessageBox,
+    QTextEdit, QFileDialog, QHeaderView, QAbstractItemView,
+    QMainWindow
 )
 
 from gui.view_dialog import ViewDialog
+from gui.date_search_dialog import DateSearchDialog
+from mods.models import ViewDate
 
-class ViewsWindow(QMainWindow):
+class ViewsPanel(QWidget):
     def __init__(self, service):
         super().__init__()
 
         self.service = service
-
-        self.setWindowTitle("Справочник просмотров")
-        self.resize(900, 500)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels([
             "ID пользователя",
             "Фильм",
-            "Год выпуска",
+            "Дата выпуска",
             "Статус"
         ])
 
@@ -36,46 +36,36 @@ class ViewsWindow(QMainWindow):
             QAbstractItemView.SelectionBehavior.SelectRows
         )
 
-        central_widget = QWidget()
+        self.status_label = QLabel()
+
         layout = QVBoxLayout()
+        layout.addWidget(QLabel("Просмотры (красно-чёрное дерево)"))
         layout.addWidget(self.table)
-        central_widget.setLayout(layout)
+        layout.addWidget(self.status_label)
 
-        self.setCentralWidget(central_widget)
+        self.setLayout(layout)
 
-        self.create_toolbar()
         self.refresh_table()
 
-    def create_toolbar(self):
-        toolbar = QToolBar("ToolStrip")
-        self.addToolBar(toolbar)
-
-        action_load = toolbar.addAction("Загрузить")
-        action_save = toolbar.addAction("Сохранить")
-        action_add = toolbar.addAction("Добавить")
-        action_delete = toolbar.addAction("Удалить")
-        action_search = toolbar.addAction("Найти по году")
-        action_show_all = toolbar.addAction("Показать все")
-        action_debug = toolbar.addAction("Печать ХТ")
-
-        action_load.triggered.connect(self.load_views)
-        action_save.triggered.connect(self.save_views)
-        action_add.triggered.connect(self.add_view)
-        action_delete.triggered.connect(self.delete_view)
-        action_search.triggered.connect(self.search_views)
-        action_show_all.triggered.connect(self.refresh_table)
-        action_debug.triggered.connect(self.show_hash_table)
-
     def refresh_table(self):
-        data = self.service.get_views_table()
+        self.current_views = self.service.get_all_views()
+        self._fill_table(self.current_views)
 
-        self.table.setRowCount(len(data))
+        self.status_label.setText(f"Записей: {len(self.current_views)}")
 
-        for row, view in enumerate(data):
-            for col, value in enumerate(view):
+    def _fill_table(self, views):
+        self.table.setRowCount(len(views))
+
+        for row, view in enumerate(views):
+            values = [
+                view.user_id,
+                view.film,
+                view.release_date.to_string(),
+                view.status
+            ]
+
+            for col, value in enumerate(values):
                 self.table.setItem(row, col, QTableWidgetItem(str(value)))
-
-        self.statusBar().showMessage(f"Записей: {len(data)}")
 
     def load_views(self):
         filename, _ = QFileDialog.getOpenFileName(
@@ -118,10 +108,13 @@ class ViewsWindow(QMainWindow):
         if dialog.exec() != dialog.DialogCode.Accepted:
             return
 
-        user_id, film, year, status = dialog.get_data()
+        user_id, film, status, release_day, release_month, release_year = dialog.get_data()
 
         try:
-            self.service.add_view(user_id, film, year, status)
+            self.service.add_view(
+                user_id, film, status,
+                release_day, release_month, release_year
+            )
             self.refresh_table()
         except ValueError as error:
             QMessageBox.warning(self, "Ошибка", str(error))
@@ -133,17 +126,8 @@ class ViewsWindow(QMainWindow):
             QMessageBox.warning(self, "Ошибка", "Выберите просмотр в таблице")
             return
 
-        user_id = int(self.table.item(row, 0).text())
-        film = self.table.item(row, 1).text()
-        year = int(self.table.item(row, 2).text())
-        status = self.table.item(row, 3).text()
-
-        deleted, steps = self.service.delete_view_by_fields(
-            user_id,
-            film,
-            year,
-            status
-        )
+        view = self.current_views[row]
+        deleted, steps = self.service.delete_view(view)
 
         if deleted:
             QMessageBox.information(
@@ -160,41 +144,41 @@ class ViewsWindow(QMainWindow):
             )
 
     def search_views(self):
-        year, ok = QInputDialog.getInt(
-            self,
-            "Поиск просмотров",
-            "Введите год выпуска:"
-        )
+        dialog = DateSearchDialog(self, title="Поиск просмотров по дате выпуска")
 
-        if not ok:
+        if dialog.exec() != dialog.DialogCode.Accepted:
             return
 
-        data, steps = self.service.find_views_table_by_year(year)
+        day, month, year = dialog.get_data()
 
-        self.table.setRowCount(len(data))
+        try:
+            release_date = ViewDate.create(day, month, year)
+        except ValueError as error:
+            QMessageBox.warning(self, "Ошибка", str(error))
+            return
 
-        for row, view in enumerate(data):
-            for col, value in enumerate(view):
-                self.table.setItem(row, col, QTableWidgetItem(str(value)))
+        records, steps = self.service.find_views_by_date(release_date)
+        self.current_views = list(records)
+        self._fill_table(self.current_views)
 
-        self.statusBar().showMessage(f"Найдено: {len(data)} | Шагов поиска: {steps}")
+        self.status_label.setText(f"Найдено: {len(self.current_views)} | Шагов поиска: {steps}")
 
         QMessageBox.information(
             self,
             "Поиск",
-            f"Найдено записей: {len(data)}\nШагов поиска: {steps}"
+            f"Найдено записей: {len(self.current_views)}\nШагов поиска: {steps}"
         )
 
-    def show_hash_table(self):
-        hash_text = self.service.debug_views_hash_table()
+    def show_tree(self):
+        tree_text = self.service.debug_views_tree()
 
         window = QMainWindow(self)
-        window.setWindowTitle("Отладка: хеш-таблица")
+        window.setWindowTitle("Отладка: красно-чёрное дерево (просмотры)")
         window.resize(900, 500)
 
         text_edit = QTextEdit()
         text_edit.setReadOnly(True)
-        text_edit.setText(hash_text)
+        text_edit.setText(tree_text)
 
         window.setCentralWidget(text_edit)
         window.show()

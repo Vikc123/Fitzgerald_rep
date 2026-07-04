@@ -7,6 +7,7 @@ class ListNode:
 class LinkedList:
     def __init__(self):
         self.head = None
+        self.tail = None
         self.size = 0
 
     def append(self, data):
@@ -14,15 +15,12 @@ class LinkedList:
 
         if self.head is None:
             self.head = node
+            self.tail = node
             self.size += 1
             return
 
-        current = self.head
-
-        while current.next is not None:
-            current = current.next
-
-        current.next = node
+        self.tail.next = node
+        self.tail = node
         self.size += 1
 
     def remove_by_reference(self, data):
@@ -35,6 +33,9 @@ class LinkedList:
                     self.head = current.next
                 else:
                     previous.next = current.next
+
+                if current is self.tail:
+                    self.tail = previous
 
                 self.size -= 1
                 return True

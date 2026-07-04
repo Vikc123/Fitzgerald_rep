@@ -1,23 +1,19 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QLineEdit,
-    QSpinBox, QPushButton, QHBoxLayout, QComboBox
+    QSpinBox, QComboBox, QPushButton, QHBoxLayout
 )
 
 from mods.models import MIN_YEAR, MAX_YEAR, MONTH_NAMES_RU
 
 
-class ViewDialog(QDialog):
+class ReportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("Добавление просмотра")
-        self.resize(400, 200)
+        self.setWindowTitle("Формирование отчёта")
+        self.resize(350, 220)
 
-        self.user_id_input = QSpinBox()
-        self.user_id_input.setMinimum(1)
-        self.user_id_input.setMaximum(999999)
-
-        self.film_input = QLineEdit()
+        self.email_input = QLineEdit()
 
         self.release_day_input = QSpinBox()
         self.release_day_input.setMinimum(1)
@@ -39,14 +35,13 @@ class ViewDialog(QDialog):
         ])
 
         form = QFormLayout()
-        form.addRow("ID пользователя:", self.user_id_input)
-        form.addRow("Фильм:", self.film_input)
+        form.addRow("Email пользователя:", self.email_input)
         form.addRow("День выпуска:", self.release_day_input)
         form.addRow("Месяц выпуска:", self.release_month_input)
         form.addRow("Год выпуска:", self.release_year_input)
         form.addRow("Статус:", self.status_input)
 
-        ok_button = QPushButton("OK")
+        ok_button = QPushButton("Сформировать")
         cancel_button = QPushButton("Отмена")
 
         ok_button.clicked.connect(self.accept)
@@ -64,10 +59,9 @@ class ViewDialog(QDialog):
 
     def get_data(self):
         return (
-            self.user_id_input.value(),
-            self.film_input.text(),
-            self.status_input.currentText(),
+            self.email_input.text(),
             self.release_day_input.value(),
             self.release_month_input.currentIndex() + 1,
-            self.release_year_input.value()
+            self.release_year_input.value(),
+            self.status_input.currentText()
         )
