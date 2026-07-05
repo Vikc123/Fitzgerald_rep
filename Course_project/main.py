@@ -9,8 +9,8 @@ from gui.capacity_dialog import CapacityDialog
 
 
 def main():
-    generate_users("data/users.txt", 15)
-    generate_views("data/views.txt", users_count=15, views_count=30)
+    generate_users("data/users.txt", 10)
+    generate_views("data/views.txt", users_count=10, views_count=10)
 
     app = QApplication(sys.argv)
 
@@ -21,7 +21,7 @@ def main():
         users_capacity = capacity_dialog.get_capacity()
 
     service = MovieService(users_capacity=users_capacity)
-    service.load_users_from_file("data/users.txt")
+    service.load_users_from_file("data/users_e.txt")
     service.load_views_from_file("data/views.txt")
 
     window = MainWindow(service)
