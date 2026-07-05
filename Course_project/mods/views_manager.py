@@ -62,7 +62,11 @@ class ViewsManager:
         return self.storage.get_active_items()
 
     def debug_tree(self):
-        return self.tree.debug_print()
+        index_lookup = {
+            id(view): index + 1
+            for index, view in enumerate(self.storage.get_active_items())
+        }
+        return self.tree.debug_print(index_lookup=index_lookup)
 
     def clear(self):
         self.storage.clear()

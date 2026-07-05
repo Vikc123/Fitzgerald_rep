@@ -22,7 +22,7 @@ def main():
 
     service = MovieService(users_capacity=users_capacity)
     service.load_users_from_file("data/users_e.txt")
-    service.load_views_from_file("data/views.txt")
+    service.load_views_from_file("data/views_e.txt")
 
     window = MainWindow(service)
     window.show()

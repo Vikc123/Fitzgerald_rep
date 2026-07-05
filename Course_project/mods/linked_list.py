@@ -2,6 +2,7 @@ class ListNode:
     def __init__(self, data):
         self.data = data
         self.next = None
+        self.prev = None
 
 
 class LinkedList:
@@ -19,28 +20,29 @@ class LinkedList:
             self.size += 1
             return
 
+        node.prev = self.tail
         self.tail.next = node
         self.tail = node
         self.size += 1
 
     def remove_by_reference(self, data):
-        previous = None
         current = self.head
 
         while current is not None:
             if current.data is data:
-                if previous is None:
+                if current.prev is None:
                     self.head = current.next
                 else:
-                    previous.next = current.next
+                    current.prev.next = current.next
 
-                if current is self.tail:
-                    self.tail = previous
+                if current.next is None:
+                    self.tail = current.prev
+                else:
+                    current.next.prev = current.prev
 
                 self.size -= 1
                 return True
 
-            previous = current
             current = current.next
 
         return False

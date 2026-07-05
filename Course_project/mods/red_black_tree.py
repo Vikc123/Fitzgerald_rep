@@ -305,23 +305,33 @@ class RedBlackTree:
         self.root = self.nil
         self.size = 0
 
-    def debug_print(self):
+    def debug_print(self, index_lookup=None):
         result = []
-        self._debug_print_helper(self.root, "", True, result)
+        self._debug_print_helper(self.root, "", True, result, index_lookup)
         return "\n".join(result)
 
-    def _debug_print_helper(self, node, indent, last, result):
+    def _debug_print_helper(self, node, indent, last, result, index_lookup):
         if node == self.nil:
             return
 
         prefix = "R---- " if last else "L---- "
         color = "BLACK" if node.color == BLACK else "RED"
 
+        indexes_text = ""
+        if index_lookup is not None:
+            indexes = [
+                str(index_lookup[id(record)])
+                for record in node.records
+                if id(record) in index_lookup
+            ]
+            if indexes:
+                indexes_text = f", номера в массиве: {', '.join(indexes)}"
+
         result.append(
-            f"{indent}{prefix}{node.key} ({color}) [записей: {len(node.records)}]"
+            f"{indent}{prefix}{node.key} ({color}) [записей: {len(node.records)}{indexes_text}]"
         )
 
         new_indent = indent + ("     " if last else "|    ")
 
-        self._debug_print_helper(node.left, new_indent, False, result)
-        self._debug_print_helper(node.right, new_indent, True, result)
+        self._debug_print_helper(node.left, new_indent, False, result, index_lookup)
+        self._debug_print_helper(node.right, new_indent, True, result, index_lookup)
