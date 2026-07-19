@@ -1,10 +1,8 @@
-from Sem_3.Lab_1.main import Node
-
-
 class LinList():
     def __init__(self):
         self.head = None
         self.tail = None
+
     def append(self, data):
         if self.head is None:
             self.head = Node(data)
@@ -13,18 +11,34 @@ class LinList():
             current = self.head
             newNode = Node(data)
 
+            if self.head.data <= data:
+                newNode.next = current
+                newNode.prev = current.prev
+                current.prev = newNode
+                self.head = newNode
+                return
+
             while(current.data > data and current.next is not None):
                 current = current.next
 
-            if self.head.data <= data:
+            if current.data <= data:
                 newNode.next = current
+                newNode.prev = current.prev
+                current.prev.next = newNode
                 current.prev = newNode
-                newNode.next = current
-                self.head = newNode
 
-            newNode.prev = current
-            current.next = newNode
-            self.tail = newNode
+            else:
+                newNode.prev = current
+                current.next = newNode
+                self.tail = newNode
+
+    def del_before(self, target):
+        current = self.head
+        while(True):
+            if current.data == target and current.prev is not None:
+                current.prev.prev = current.next
+                # curre
+
 
 
 class Node():
@@ -36,7 +50,7 @@ class Node():
 
 def main():
     List = LinList()
-    a = [10, 3, 7]
+    a = [1,1,0,8,2,0,0,6]
     for i in a:
         List.append(i)
     print("done")
