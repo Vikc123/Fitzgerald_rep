@@ -75,6 +75,8 @@ class BST:
 
         else:
             current_root.data.append(data)
+
+
     def insert(self, data: str):
         if self.root == None:
             self.root = Node.set(data)
