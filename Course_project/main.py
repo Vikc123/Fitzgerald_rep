@@ -9,8 +9,8 @@ from gui.capacity_dialog import CapacityDialog
 
 
 def main():
-    generate_users("data/users.txt", 10)
-    generate_views("data/views.txt", users_count=10, views_count=10)
+    # generate_users("data/users.txt", 10)
+    # generate_views("data/views.txt", users_count=10, views_count=10)
 
     app = QApplication(sys.argv)
 

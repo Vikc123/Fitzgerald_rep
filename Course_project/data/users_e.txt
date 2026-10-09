@@ -8,3 +8,4 @@
 8;user8@gmail.com;VIP
 9;user9@gmail.com;Basic
 10;user10@yandex.ru;Basic
+

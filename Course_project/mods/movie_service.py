@@ -123,13 +123,14 @@ class MovieService:
         if user is None:
             return [], user_steps
 
-        views, views_steps = self.views.find_by_user(user.user_id)
+        # views, views_steps = self.views.find_by_user(user.user_id)
+        views, views_steps = self.views.find_by_date(release_date)
         steps = user_steps + views_steps
 
         result = []
 
         for view in views:
-            if view.release_date == release_date and view.status == status:
+            if view.user_id == user.user_id and view.status == status:
                 result.append([
                     user.user_id,
                     user.email,
